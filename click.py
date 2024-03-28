@@ -6,6 +6,8 @@ from random import randint
 from base64 import b64decode
 from time import sleep
 from sys import exit
+from traceback import format_exc
+from math import ceil
 
 def decodeText(text : str):
     return b64decode(text.encode()).decode("utf-8" , "ignore")
@@ -50,40 +52,65 @@ class Click:
         options = webdriver.ChromeOptions()
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option('useAutomationExtension', False)
-        # options.add_argument("--headless=new")
+        options.add_argument("--headless=new")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
         options.page_load_strategy = 'eager'
         self.browser = webdriver.Chrome(options = options)
         self.browser.get(self.webAppData)
-    def getAuth(self):
+    def Authenticate(self):
         self.session.post("https://plausible.joincommunity.xyz/api/event" , data = dumps({"n":"pageview","u":self.webAppData,"r":"null"}))
         getAuthCode = self.session.post("https://clicker-api.joincommunity.xyz/auth/webapp-session" , data = dumps({"webAppData" : self.webAppData2}))
         self.session.headers.update({"Authorization" :  "Bearer "+getAuthCode.json()["data"]["accessToken"]})
+        self.getUserInfo()
+    def getUserInfo(self):
+        profile = self.session.get("https://clicker-api.joincommunity.xyz/clicker/profile")
+        self.profile = profile.json()
+        print(self.profile)
+        self.multipleClicks = self.profile["data"][0]["multipleClicks"]
+        self.lastAvailableCoins = self.profile["data"][0]["lastAvailableCoins"]
+        self.miningPerTime = self.profile["data"][0]["miningPerTime"]
     def getFirstHash(self):
-        result = self.browser.execute_script(self.js_code%(self.session.headers['Authorization'] , -1 , 9 % randint(1,30) ,  self.webAppData2))
+        result = self.browser.execute_script(self.js_code%(self.session.headers['Authorization'] , -1 , self.multipleClicks * randint(1,4) ,  self.webAppData2))
         result = loads(result)
         print(result)
         hash_code = result["data"][0]["hash"][0]
-        return self.browser.execute_script('''return %s'''%decodeText(hash_code))
-    def getHashResult(self , previous_hash):
-        result = self.browser.execute_script(self.js_code%(self.session.headers['Authorization'] , previous_hash , self.ScorePerClick + randint(40,280) ,  self.webAppData2))
-        result = loads(result)
-        print(result)
-        hash_code = result["data"][0]["hash"][0]
+        self.lastAvailableCoins = result["data"][0]["lastAvailableCoins"]
         result_hash = self.browser.execute_script('''return %s'''%decodeText(hash_code))
+        print(f"{decodeText(hash_code)} -> {result_hash}")
+        return result_hash
+    def getHashResult(self , previous_hash):
+        scorePerClick = self.ScorePerClick + randint(10,50)
+        scorePerClick -= scorePerClick%self.multipleClicks
+        result = self.browser.execute_script(self.js_code%(self.session.headers['Authorization'] , previous_hash , scorePerClick ,  self.webAppData2))
+        result = loads(result)
+        print(result)
+        hash_code = result["data"][0]["hash"][0]
+        self.lastAvailableCoins = result["data"][0]["lastAvailableCoins"]
+        result_hash = self.browser.execute_script('''return %s'''%decodeText(hash_code))
+        print(f"{decodeText(hash_code)} -> {result_hash}")
         return (result , result_hash)
     def click(self):
         result_hash = self.getFirstHash()
         while 1:
-            for _ in range(self.ClickNumber):
-                try:
-                    result , result_hash = self.getHashResult(result_hash)
-                    sleep(self.SleepTime)
-                except KeyboardInterrupt:
+            try:
+                for _ in range(self.ClickNumber):
+                    while True:
+                        try:
+                            result , result_hash = self.getHashResult(result_hash)
+                            if self.lastAvailableCoins < self.ScorePerClick:
+                                sleep(ceil((self.ScorePerClick - self.lastAvailableCoins)/4))
+                            break
+                        except:
+                            self.Authenticate()
+                            result_hash = self.getFirstHash()
+                            sleep(1)
+                    sleep(self.ScorePerClick//200)
+                sleep(self.SleepTime)
+            except KeyboardInterrupt:
                     print("exiting , closing browser")
-                    self.browser.close()
                     self.browser.quit()
-                    exit()
                     print("DONE[+]")
-                except:
-                    self.getAuth()
-                    result_hash = self.getFirstHash()
+                    exit()
+            except:
+                print(format_exc())

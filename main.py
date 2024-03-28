@@ -3,6 +3,6 @@ from click import Click
 
 settings = Settings()
 clicker = Click(settings.webAppData , settings.ScorePerClick , settings.ClickNumber , settings.SleepTime)
-clicker.getAuth()
+clicker.Authenticate()
 clicker.startBrowser()
 clicker.click()
