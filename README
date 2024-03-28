@@ -1,0 +1,9 @@
+pipenv install
+
+pipenv shell
+
+add arguments to .env ...
+
+download chromedriver and place it here .
+
+python main.py

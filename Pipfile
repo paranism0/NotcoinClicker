@@ -1,0 +1,18 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+pyrogram = "*"
+pydantic = "==2.6.4"
+pydantic-settings = "==2.2.1"
+selenium = "==4.19.0"
+requests = "==2.31.0"
+urllib3 = "==2.2.1"
+
+[dev-packages]
+
+[requires]
+python_version = "3.11"
+python_full_version = "3.11.4"
