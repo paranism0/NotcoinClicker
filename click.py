@@ -82,6 +82,7 @@ class Click:
                     print("exiting , closing browser")
                     self.browser.close()
                     self.browser.quit()
+                    exit()
                     print("DONE[+]")
                 except:
                     self.getAuth()
