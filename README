@@ -7,3 +7,6 @@ add arguments to .env ...
 download chromedriver and place it here .
 
 python main.py
+
+
+OR docker build -t clicker:v0 . && docker run --rm -d clicker:v0
