@@ -2,7 +2,7 @@ from requests import session
 from json import dumps , loads
 from urllib.parse import unquote
 from selenium import webdriver
-from random import randint
+from random import randint , uniform
 from base64 import b64decode
 from time import sleep
 from sys import exit
@@ -13,12 +13,11 @@ def decodeText(text : str):
     return b64decode(text.encode()).decode("utf-8" , "ignore")
 
 class Click:
-    def __init__(self , webAppData , ScorePerClick , ClickNumber , SleepTime):
+    def __init__(self , webAppData , ScorePerClick , ClickNumber):
         self.webAppData = webAppData
         self.webAppData2 = unquote(self.webAppData.split("=")[1].split("&")[0])
         self.ScorePerClick = ScorePerClick
         self.ClickNumber = ClickNumber
-        self.SleepTime = SleepTime
         self.session = session()
         self.js_code = '''
             function requestComplete(response){
@@ -90,27 +89,36 @@ class Click:
         result_hash = self.browser.execute_script('''return %s'''%decodeText(hash_code))
         print(f"{decodeText(hash_code)} -> {result_hash}")
         return (result , result_hash)
+    def handleKeyboardInterrupt(self):
+        print("exiting , closing browser")
+        self.browser.quit()
+        print("DONE[+]")
+        exit()
     def click(self):
         result_hash = self.getFirstHash()
+        sleep((self.ScorePerClick//(randint(4,6)*self.multipleClicks)) + round(uniform(0.3,0.6),3))
         while 1:
             try:
                 for _ in range(self.ClickNumber):
+                    counter = 0
                     while True:
                         try:
                             result , result_hash = self.getHashResult(result_hash)
                             if self.lastAvailableCoins < self.ScorePerClick:
                                 sleep(ceil((self.ScorePerClick - self.lastAvailableCoins)/4))
                             break
+                        except KeyboardInterrupt:
+                            self.handleKeyboardInterrupt()
                         except:
-                            self.Authenticate()
-                            result_hash = self.getFirstHash()
-                            sleep(1)
-                    sleep(self.ScorePerClick//200)
-                sleep(self.SleepTime)
+                            sleep(randint(1,2))
+                            if counter>=2:
+                               self.Authenticate()
+                               result_hash = self.getFirstHash()
+                               counter = 0
+                            counter+=1
+                    sleep((self.ScorePerClick//(randint(4,6)*self.multipleClicks)) + round(uniform(0.3,0.6),3))
+                sleep((self.ScorePerClick*self.ClickNumber)//self.miningPerTime)
             except KeyboardInterrupt:
-                    print("exiting , closing browser")
-                    self.browser.quit()
-                    print("DONE[+]")
-                    exit()
+                self.handleKeyboardInterrupt()
             except:
                 print(format_exc())
