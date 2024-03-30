@@ -149,6 +149,6 @@ class Click:
             except KeyboardInterrupt:
                 break
             except:
-                break
                 print(format_exc())
+                break
         self.handleKeyboardInterrupt()
