@@ -124,14 +124,13 @@ class Click:
                             break
                         except:
                             sleep(randint(1,2))
-                            if counter == 2 or counter == 3:
+                            if counter == 3 or counter == 4:
                                 try:
                                     self.Authenticate()
                                     result_hash = self.getFirstHash()
-                                    counter = 0
                                 except:
                                     ...
-                            elif counter > 3:
+                            elif counter > 4:
                                 if self.webUrlReqAttempts>=2:
                                     ok = False
                                     break
@@ -140,7 +139,6 @@ class Click:
                                     self.webUrlReqAttempts+=1
                                     self.Authenticate()
                                     result_hash = self.getFirstHash()
-                                    counter = 0
                                 except:
                                     ...
                             counter+=1
