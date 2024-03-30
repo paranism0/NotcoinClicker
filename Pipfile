@@ -4,12 +4,13 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pyrogram = "*"
+pyrogram = "==2.0.106"
 pydantic = "==2.6.4"
 pydantic-settings = "==2.2.1"
 selenium = "==4.19.0"
 requests = "==2.31.0"
 urllib3 = "==2.2.1"
+tgcrypto = "==1.2.5"
 
 [dev-packages]
 

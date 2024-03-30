@@ -8,14 +8,14 @@ from time import sleep
 from sys import exit
 from traceback import format_exc
 from math import ceil
+from getWebViewResultUrl import WebViewProcess
 
 def decodeText(text : str):
     return b64decode(text.encode()).decode("utf-8" , "ignore")
 
 class Click:
-    def __init__(self , webAppData , ScorePerClick , ClickNumber):
-        self.webAppData = webAppData
-        self.webAppData2 = unquote(self.webAppData.split("=")[1].split("&")[0])
+    def __init__(self , webview : WebViewProcess , ScorePerClick , ClickNumber):
+        self.webview = webview
         self.ScorePerClick = ScorePerClick
         self.ClickNumber = ClickNumber
         self.session = session()
@@ -46,7 +46,12 @@ class Click:
             "Origin" : "https://clicker.joincommunity.xyz" ,
             "Referer" : "https://clicker.joincommunity.xyz/"
         }
+        self.webUrlReqAttempts = 0
+        self.generateWebViewData()
         self.session.headers.update(self.headers)
+    def generateWebViewData(self):
+        self.webAppData = self.webview.getWebViewUrl()
+        self.webAppData2 = unquote(self.webAppData.split("=")[1].split("&")[0])
     def startBrowser(self):
         options = webdriver.ChromeOptions()
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
@@ -95,29 +100,49 @@ class Click:
         print("DONE[+]")
         exit()
     def click(self):
-        result_hash = self.getFirstHash()
+        try:
+           result_hash = self.getFirstHash()
+        except:
+            print("It seems that your account got blocked ...")
+            self.handleKeyboardInterrupt()
         sleep((self.ScorePerClick//(randint(4,6)*self.multipleClicks)) + round(uniform(0.3,0.6),3))
         while 1:
             try:
+                counter = 0
                 for _ in range(self.ClickNumber):
-                    counter = 0
                     while True:
                         try:
                             result , result_hash = self.getHashResult(result_hash)
                             if self.lastAvailableCoins < self.ScorePerClick:
                                 sleep(ceil((self.ScorePerClick - self.lastAvailableCoins)/4))
+                            self.webUrlReqAttempts = 0
+                            counter = 0
                             break
                         except KeyboardInterrupt:
                             self.handleKeyboardInterrupt()
                         except:
                             sleep(randint(1,2))
-                            if counter>=2:
-                               self.Authenticate()
-                               result_hash = self.getFirstHash()
-                               counter = 0
+                            if counter == 2 or counter == 3:
+                                try:
+                                    self.Authenticate()
+                                    result_hash = self.getFirstHash()
+                                    counter = 0
+                                except:
+                                    ...
+                            elif counter > 3:
+                                if self.webUrlReqAttempts>=2:
+                                    self.handleKeyboardInterrupt()
+                                try:
+                                    self.generateWebViewData()
+                                    self.webUrlReqAttempts+=1
+                                    self.Authenticate()
+                                    result_hash = self.getFirstHash()
+                                    counter = 0
+                                except:
+                                    ...
                             counter+=1
                     sleep((self.ScorePerClick//(randint(4,6)*self.multipleClicks)) + round(uniform(0.3,0.6),3))
-                sleep((self.ScorePerClick*self.ClickNumber)//self.miningPerTime)
+                sleep(((self.ScorePerClick*self.ClickNumber)//self.miningPerTime) + round(uniform(0.3,1),3))
             except KeyboardInterrupt:
                 self.handleKeyboardInterrupt()
             except:
