@@ -106,7 +106,8 @@ class Click:
             print("It seems that your account got blocked ...")
             self.handleKeyboardInterrupt()
         sleep((self.ScorePerClick//(randint(4,6)*self.multipleClicks)) + round(uniform(0.3,0.6),3))
-        while 1:
+        ok = True
+        while ok:
             try:
                 counter = 0
                 for _ in range(self.ClickNumber):
@@ -119,7 +120,8 @@ class Click:
                             counter = 0
                             break
                         except KeyboardInterrupt:
-                            self.handleKeyboardInterrupt()
+                            ok = False
+                            break
                         except:
                             sleep(randint(1,2))
                             if counter == 2 or counter == 3:
@@ -131,7 +133,8 @@ class Click:
                                     ...
                             elif counter > 3:
                                 if self.webUrlReqAttempts>=2:
-                                    self.handleKeyboardInterrupt()
+                                    ok = False
+                                    break
                                 try:
                                     self.generateWebViewData()
                                     self.webUrlReqAttempts+=1
@@ -144,6 +147,8 @@ class Click:
                     sleep((self.ScorePerClick//(randint(4,6)*self.multipleClicks)) + round(uniform(0.3,0.6),3))
                 sleep(((self.ScorePerClick*self.ClickNumber)//self.miningPerTime) + round(uniform(0.3,1),3))
             except KeyboardInterrupt:
-                self.handleKeyboardInterrupt()
+                break
             except:
+                break
                 print(format_exc())
+        self.handleKeyboardInterrupt()
